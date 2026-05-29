@@ -1,0 +1,923 @@
+@prefix : <https://prov-cred.org/ns/> .
+@prefix mls: <http://www.w3.org/ns/mls#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix vann: <http://purl.org/vocab/vann/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix provcred: <https://prov-cred.org/ns/> .
+@base <https://prov-cred.org/ns/> .
+
+<https://prov-cred.org/ns/> rdf:type owl:Ontology ;
+                             owl:versionIRI <https://prov-cred.org/ns/0.3.0> ;
+                             owl:imports <http://www.w3.org/ns/prov-o#> ;
+                             dcterms:created "2026-02-16"^^xsd:date ;
+                             dcterms:modified "2026-05-29"^^xsd:date ;
+                             vann:preferredNamespacePrefix "provcred" ;
+                             vann:preferredNamespaceUri "https://prov-cred.org/ns/" ;
+                             rdfs:comment """A minimal extension of W3C PROV-O that attaches model
+reliability and institutional credibility claims to individual knowledge
+graph triples via RDF-Star.
+
+Two prov:Attribution subclasses serve distinct governance roles:
+  provcred:ReliabilityAttribution — the data provider's technical disclosure:
+    which model produced the triple, its benchmark performance
+    (BenchmarkDerived) or runtime confidence (InferenceDerived), and the
+    inference parameters. Published alongside the triple so downstream
+    consumers can assess and reuse the data at their own informed risk.
+    Supports EU AI Act transparency requirements for AI-generated content.
+  provcred:CredibilityAttribution — an external institutional seal: an
+    accreditation body, domain expert, or editorial board vouches for the
+    producing model. Provides accredited data providers with documented proof
+    of due diligence and a formal defence against liability for published
+    errors.
+
+Enrichment activities are grounded in a four-tier prov:Activity hierarchy:
+HumanEnrichment, DeterministicEnrichment, HeuristicEnrichment, ModelEnrichment. Model
+evaluation metadata aligns with W3C ML Schema (mls:specifiedBy,
+mls:hasValue). Described in: [paper citation]."""@en ;
+                             rdfs:label "PROV-CRED: Rated Provenance for Knowledge Graphs"@en ;
+                             owl:versionInfo "0.3.0" .
+
+#################################################################
+#    Annotation properties
+#################################################################
+
+###  http://purl.org/dc/terms/created
+dcterms:created rdf:type owl:AnnotationProperty .
+
+
+###  http://purl.org/dc/terms/modified
+dcterms:modified rdf:type owl:AnnotationProperty .
+
+
+###  http://purl.org/vocab/vann/preferredNamespacePrefix
+vann:preferredNamespacePrefix rdf:type owl:AnnotationProperty .
+
+
+###  http://purl.org/vocab/vann/preferredNamespaceUri
+vann:preferredNamespaceUri rdf:type owl:AnnotationProperty .
+
+
+###  http://www.w3.org/2004/02/skos/core#altLabel
+skos:altLabel rdf:type owl:AnnotationProperty .
+
+
+###  http://www.w3.org/2004/02/skos/core#definition
+skos:definition rdf:type owl:AnnotationProperty .
+
+
+###  http://www.w3.org/2004/02/skos/core#exactMatch
+skos:exactMatch rdf:type owl:AnnotationProperty .
+
+
+###  http://www.w3.org/2004/02/skos/core#example
+skos:example rdf:type owl:AnnotationProperty .
+
+
+###  http://www.w3.org/2004/02/skos/core#hasTopConcept
+skos:hasTopConcept rdf:type owl:AnnotationProperty .
+
+
+###  http://www.w3.org/2004/02/skos/core#inScheme
+skos:inScheme rdf:type owl:AnnotationProperty .
+
+
+###  http://www.w3.org/2004/02/skos/core#prefLabel
+skos:prefLabel rdf:type owl:AnnotationProperty .
+
+
+###  http://www.w3.org/2004/02/skos/core#related
+skos:related rdf:type owl:AnnotationProperty .
+
+
+###  http://www.w3.org/2004/02/skos/core#scopeNote
+skos:scopeNote rdf:type owl:AnnotationProperty .
+
+
+###  http://www.w3.org/2004/02/skos/core#topConceptOf
+skos:topConceptOf rdf:type owl:AnnotationProperty .
+
+
+#################################################################
+#    Datatypes
+#################################################################
+
+###  http://www.w3.org/2001/XMLSchema#date
+xsd:date rdf:type rdfs:Datatype .
+
+
+###  http://www.w3.org/2001/XMLSchema#dateTime
+xsd:dateTime rdf:type rdfs:Datatype .
+
+
+#################################################################
+#    Object Properties
+#################################################################
+
+###  https://prov-cred.org/ns/accreditedBy
+provcred:accreditedBy rdf:type owl:ObjectProperty ;
+                      rdfs:domain provcred:Model ;
+                      rdfs:range provcred:CredibilityAttribution ;
+                      rdfs:comment "Links the model to an institutional accreditation seal. The seal is on the model, not on individual triples; consumers trace it via prov:wasAttributedTo -> Model -> provcred:accreditedBy."@en ;
+                      rdfs:isDefinedBy <https://prov-cred.org/ns/> ;
+                      rdfs:label "accredited by"@en .
+
+
+###  https://prov-cred.org/ns/affectedPredicate
+provcred:affectedPredicate rdf:type owl:ObjectProperty ;
+                           rdfs:domain provcred:KGEnrichment ;
+                           rdfs:comment "The RDF predicate primarily affected by this enrichment."@en ;
+                           rdfs:isDefinedBy <https://prov-cred.org/ns/> ;
+                           rdfs:label "affected predicate"@en .
+
+
+###  https://prov-cred.org/ns/basis
+provcred:basis rdf:type owl:ObjectProperty ;
+               rdfs:domain provcred:ReliabilityAttribution ;
+               rdfs:range owl:NamedIndividual ;
+               rdfs:comment "Disambiguates the interpretation of mls:hasValue. BenchmarkDerived: population-level aggregate score used as proxy. InferenceDerived: model's actual runtime output for this specific triple."@en ;
+               rdfs:isDefinedBy <https://prov-cred.org/ns/> ;
+               rdfs:label "basis"@en .
+
+
+###  https://prov-cred.org/ns/evaluationDataset
+provcred:evaluationDataset rdf:type owl:ObjectProperty ;
+                           rdfs:domain provcred:Model ;
+                           rdfs:range skos:Concept ;
+                           rdfs:comment "Held-out benchmark dataset used to credential the model. Value from provcred:DatasetScheme."@en ;
+                           rdfs:isDefinedBy <https://prov-cred.org/ns/> ;
+                           rdfs:label "evaluation dataset"@en .
+
+
+###  https://prov-cred.org/ns/groundingSource
+provcred:groundingSource rdf:type owl:ObjectProperty ;
+                         rdfs:domain provcred:GroundingEvidence ;
+                         rdfs:comment "URI of the source document providing the evidence."@en ;
+                         rdfs:isDefinedBy <https://prov-cred.org/ns/> ;
+                         rdfs:label "grounding source"@en .
+
+
+###  https://prov-cred.org/ns/hasGroundingEvidence
+provcred:hasGroundingEvidence rdf:type owl:ObjectProperty ;
+                              rdfs:domain prov:Attribution ;
+                              rdfs:range provcred:GroundingEvidence ;
+                              rdfs:comment "Links an attribution to its supporting evidence. For ReliabilityAttribution, evidence grounds the benchmark score claim. For plain prov:Attribution nodes on HumanEnrichment triples, evidence carries cited sources, editorial review records, or community consensus records."@en ;
+                              rdfs:isDefinedBy <https://prov-cred.org/ns/> ;
+                              rdfs:label "has grounding evidence"@en .
+
+
+###  https://prov-cred.org/ns/modelCard
+provcred:modelCard rdf:type owl:ObjectProperty ;
+                   rdfs:domain provcred:Model ;
+                   rdfs:comment """URI of the external model card or technical report where
+the benchmark evaluation is documented (e.g. a Hugging Face model card or
+a published technical report). Complements provcred:credentialedAt:
+the timestamp records when the evaluation was performed; the model card
+link records where it can be verified. Makes the static human-readable
+model card document queryable as a graph property."""@en ;
+                   rdfs:isDefinedBy <https://prov-cred.org/ns/> ;
+                   rdfs:label "model card"@en .
+
+
+###  https://prov-cred.org/ns/inferenceSetting
+provcred:inferenceSetting rdf:type owl:ObjectProperty ;
+                          rdfs:domain provcred:ModelEnrichment ;
+                          rdfs:range provcred:InferenceSetting ;
+                          rdfs:comment "Runtime parameters shared across all triples produced in this ModelEnrichment run."@en ;
+                          rdfs:isDefinedBy <https://prov-cred.org/ns/> ;
+                          rdfs:label "inference setting"@en .
+
+
+###  https://prov-cred.org/ns/provider
+provcred:provider rdf:type owl:ObjectProperty ;
+                  rdfs:domain provcred:Model ;
+                  rdfs:comment "URI of the organisation that hosts or serves the model."@en ;
+                  rdfs:isDefinedBy <https://prov-cred.org/ns/> ;
+                  rdfs:label "provider"@en .
+
+
+###  https://prov-cred.org/ns/publishedEvaluation
+provcred:publishedEvaluation rdf:type owl:ObjectProperty ;
+                             rdfs:domain provcred:Model ;
+                             rdfs:range mls:ModelEvaluation ;
+                             rdfs:comment "Links the model to a published benchmark evaluation record (mls:ModelEvaluation) carrying the population-level score via mls:specifiedBy and mls:hasValue."@en ;
+                             rdfs:isDefinedBy <https://prov-cred.org/ns/> ;
+                             rdfs:label "published evaluation"@en .
+
+
+###  https://prov-cred.org/ns/sourceGraph
+provcred:sourceGraph rdf:type owl:ObjectProperty ;
+                     rdfs:domain provcred:KGEnrichment ;
+                     rdfs:comment "Named graph read as input to the enrichment."@en ;
+                     rdfs:isDefinedBy <https://prov-cred.org/ns/> ;
+                     rdfs:label "source graph"@en .
+
+
+###  https://prov-cred.org/ns/targetGraph
+provcred:targetGraph rdf:type owl:ObjectProperty ;
+                     rdfs:domain provcred:KGEnrichment ;
+                     rdfs:comment "Named graph written as output of the enrichment."@en ;
+                     rdfs:isDefinedBy <https://prov-cred.org/ns/> ;
+                     rdfs:label "target graph"@en .
+
+
+###  https://prov-cred.org/ns/taskType
+provcred:taskType rdf:type owl:ObjectProperty ;
+                  rdfs:domain provcred:Model ;
+                  rdfs:range skos:Concept ;
+                  rdfs:comment "The KG enrichment task the model was credentialed for. Value from provcred:TaskTypeScheme. A model may carry multiple taskType assertions."@en ;
+                  rdfs:isDefinedBy <https://prov-cred.org/ns/> ;
+                  rdfs:label "task type"@en .
+
+
+###  https://prov-cred.org/ns/trainingDataset
+provcred:trainingDataset rdf:type owl:ObjectProperty ;
+                         rdfs:domain provcred:Model ;
+                         rdfs:range skos:Concept ;
+                         rdfs:comment "Dataset used to train the model. Value from provcred:DatasetScheme. Distinct from provcred:evaluationDataset (the held-out test split)."@en ;
+                         rdfs:isDefinedBy <https://prov-cred.org/ns/> ;
+                         rdfs:label "training dataset"@en .
+
+
+#################################################################
+#    Data properties
+#################################################################
+
+###  https://prov-cred.org/ns/benchmarkDomain
+provcred:benchmarkDomain rdf:type owl:DatatypeProperty ;
+                         rdfs:domain provcred:Model ;
+                         rdfs:range xsd:string ;
+                         rdfs:comment "Domain of the benchmark data (e.g. 'English newswire'). Reliability claim is valid only when this approximates the deployment domain."@en ;
+                         rdfs:isDefinedBy <https://prov-cred.org/ns/> ;
+                         rdfs:label "benchmark domain"@en .
+
+
+###  https://prov-cred.org/ns/credentialedAt
+provcred:credentialedAt rdf:type owl:DatatypeProperty ;
+                        rdfs:domain provcred:ReliabilityAttribution ;
+                        rdfs:range xsd:dateTime ;
+                        rdfs:comment """Date and time at which this benchmark evaluation was
+performed and the reliability score declared. Placed on
+provcred:ReliabilityAttribution rather than provcred:Model because a
+model may carry multiple reliability attributions for different task types
+and benchmarks, each established at a different time."""@en ;
+                        rdfs:isDefinedBy <https://prov-cred.org/ns/> ;
+                        rdfs:label "credentialed at"@en .
+
+
+###  https://prov-cred.org/ns/deploymentDomain
+provcred:deploymentDomain rdf:type owl:DatatypeProperty ;
+                          rdfs:domain provcred:Model ;
+                          rdfs:range xsd:string ;
+                          rdfs:comment "Domain of the actual deployment context (e.g. 'German cultural heritage records'). Compare with provcred:benchmarkDomain to detect mismatch."@en ;
+                          rdfs:isDefinedBy <https://prov-cred.org/ns/> ;
+                          rdfs:label "deployment domain"@en .
+
+
+###  https://prov-cred.org/ns/groundingPassage
+provcred:groundingPassage rdf:type owl:DatatypeProperty ;
+                          rdfs:domain provcred:GroundingEvidence ;
+                          rdfs:range xsd:string ;
+                          rdfs:comment "The literal text passage that supports the assertion."@en ;
+                          rdfs:isDefinedBy <https://prov-cred.org/ns/> ;
+                          rdfs:label "grounding passage"@en .
+
+
+###  https://prov-cred.org/ns/maxTokens
+provcred:maxTokens rdf:type owl:DatatypeProperty ;
+                   rdfs:domain provcred:InferenceSetting ;
+                   rdfs:range xsd:nonNegativeInteger ;
+                   rdfs:comment "Maximum tokens the model may generate per call. Generative models only."@en ;
+                   rdfs:isDefinedBy <https://prov-cred.org/ns/> ;
+                   rdfs:label "max tokens"@en .
+
+
+
+###  https://prov-cred.org/ns/modelIdentifier
+provcred:modelIdentifier rdf:type owl:DatatypeProperty ;
+                         rdfs:domain provcred:Model ;
+                         rdfs:range xsd:string ;
+                         rdfs:comment "Versioned model ID as used by the provider (e.g. 'gpt-4o-2024-08-06')."@en ;
+                         rdfs:isDefinedBy <https://prov-cred.org/ns/> ;
+                         rdfs:label "model identifier"@en .
+
+
+###  https://prov-cred.org/ns/modelVersion
+provcred:modelVersion rdf:type owl:DatatypeProperty ;
+                      rdfs:domain provcred:Model ;
+                      rdfs:range xsd:string ;
+                      rdfs:comment "Semantic version string distinct from the provider's API model ID."@en ;
+                      rdfs:isDefinedBy <https://prov-cred.org/ns/> ;
+                      rdfs:label "model version"@en .
+
+
+###  https://prov-cred.org/ns/promptText
+provcred:promptText rdf:type owl:DatatypeProperty ;
+                    rdfs:domain provcred:Prompt ;
+                    rdfs:range xsd:string ;
+                    rdfs:comment "The literal text of the prompt passed to the generative model."@en ;
+                    rdfs:isDefinedBy <https://prov-cred.org/ns/> ;
+                    rdfs:label "prompt text"@en .
+
+
+###  https://prov-cred.org/ns/refinementOrder
+provcred:refinementOrder rdf:type owl:DatatypeProperty ;
+                         rdfs:domain provcred:KGEnrichment ;
+                         rdfs:range xsd:nonNegativeInteger ;
+                         rdfs:comment "Position in a sequential enrichment chain (0-indexed)."@en ;
+                         rdfs:isDefinedBy <https://prov-cred.org/ns/> ;
+                         rdfs:label "refinement order"@en .
+
+
+###  https://prov-cred.org/ns/scoreThreshold
+provcred:scoreThreshold rdf:type owl:DatatypeProperty ;
+                        rdfs:domain provcred:InferenceSetting ;
+                        rdfs:range xsd:decimal ;
+                        rdfs:comment "Minimum model score to accept a candidate triple. Applies to KGE completion, classifiers, and heuristic filters."@en ;
+                        rdfs:isDefinedBy <https://prov-cred.org/ns/> ;
+                        rdfs:label "score threshold"@en .
+
+
+###  https://prov-cred.org/ns/seed
+provcred:seed rdf:type owl:DatatypeProperty ;
+              rdfs:domain provcred:InferenceSetting ;
+              rdfs:range xsd:nonNegativeInteger ;
+              rdfs:comment "Random seed for reproducibility. Applies to all model types."@en ;
+              rdfs:isDefinedBy <https://prov-cred.org/ns/> ;
+              rdfs:label "seed"@en .
+
+
+###  https://prov-cred.org/ns/snapshotDate
+provcred:snapshotDate rdf:type owl:DatatypeProperty ;
+                      rdfs:domain provcred:Model ;
+                      rdfs:range xsd:date ;
+                      rdfs:comment "Date the model version was fixed for this deployment."@en ;
+                      rdfs:isDefinedBy <https://prov-cred.org/ns/> ;
+                      rdfs:label "snapshot date"@en .
+
+
+###  https://prov-cred.org/ns/temperature
+provcred:temperature rdf:type owl:DatatypeProperty ;
+                     rdfs:domain provcred:InferenceSetting ;
+                     rdfs:range xsd:decimal ;
+                     rdfs:comment "Sampling temperature. Generative models only."@en ;
+                     rdfs:isDefinedBy <https://prov-cred.org/ns/> ;
+                     rdfs:label "temperature"@en .
+
+
+###  https://prov-cred.org/ns/topK
+provcred:topK rdf:type owl:DatatypeProperty ;
+              rdfs:domain provcred:InferenceSetting ;
+              rdfs:range xsd:nonNegativeInteger ;
+              rdfs:comment "Top-k sampling: tokens considered at each step. Generative models only."@en ;
+              rdfs:isDefinedBy <https://prov-cred.org/ns/> ;
+              rdfs:label "top-k"@en .
+
+
+###  https://prov-cred.org/ns/topP
+provcred:topP rdf:type owl:DatatypeProperty ;
+              rdfs:domain provcred:InferenceSetting ;
+              rdfs:range xsd:decimal ;
+              rdfs:comment "Nucleus sampling parameter. Generative models only."@en ;
+              rdfs:isDefinedBy <https://prov-cred.org/ns/> ;
+              rdfs:label "top-p"@en .
+
+
+###  https://prov-cred.org/ns/triplesAdded
+provcred:triplesAdded rdf:type owl:DatatypeProperty ;
+                      rdfs:domain provcred:KGEnrichment ;
+                      rdfs:range xsd:nonNegativeInteger ;
+                      rdfs:isDefinedBy <https://prov-cred.org/ns/> ;
+                      rdfs:label "triples added"@en .
+
+
+###  https://prov-cred.org/ns/triplesModified
+provcred:triplesModified rdf:type owl:DatatypeProperty ;
+                         rdfs:domain provcred:KGEnrichment ;
+                         rdfs:range xsd:nonNegativeInteger ;
+                         rdfs:isDefinedBy <https://prov-cred.org/ns/> ;
+                         rdfs:label "triples modified"@en .
+
+
+###  https://prov-cred.org/ns/triplesRemoved
+provcred:triplesRemoved rdf:type owl:DatatypeProperty ;
+                        rdfs:domain provcred:KGEnrichment ;
+                        rdfs:range xsd:nonNegativeInteger ;
+                        rdfs:isDefinedBy <https://prov-cred.org/ns/> ;
+                        rdfs:label "triples removed"@en .
+
+
+#################################################################
+#    Classes
+#################################################################
+
+###  http://www.w3.org/2002/07/owl#NamedIndividual
+owl:NamedIndividual rdf:type owl:Class .
+
+
+###  http://www.w3.org/2004/02/skos/core#Concept
+skos:Concept rdf:type owl:Class .
+
+
+###  http://www.w3.org/2004/02/skos/core#ConceptScheme
+skos:ConceptScheme rdf:type owl:Class .
+
+
+###  http://www.w3.org/ns/mls#EvaluationMeasure
+mls:EvaluationMeasure rdf:type owl:Class .
+
+
+###  http://www.w3.org/ns/mls#ModelEvaluation
+mls:ModelEvaluation rdf:type owl:Class .
+
+
+###  https://prov-cred.org/ns/CredibilityAttribution
+provcred:CredibilityAttribution rdf:type owl:Class ;
+                                rdfs:subClassOf prov:Attribution ;
+                                rdfs:comment """An institutional seal attached to a provcred:Model by an
+external accreditation body. Subclass of prov:Attribution. Attached to the
+model (not to each triple) via provcred:accreditedBy; a consumer traces the
+seal from any triple via prov:wasAttributedTo -> Model ->
+provcred:accreditedBy.
+
+Distinct from ReliabilityAttribution: carries no model score. In v0.1 this
+class is intentionally minimal — it inherits prov:agent (the endorsing body)
+and prov:atTime (endorsement date) from prov:Attribution and adds nothing
+further.
+
+This minimalism is the blue-sky provocation: the vocabulary creates the
+architectural slot for an institutional seal and thereby surfaces the open
+governance question — who has the authority to issue such a seal, under what
+criteria, and with what legal force? These questions are not answered here;
+answering them is the long-horizon research and policy agenda this class is
+designed to provoke.
+
+Accredited data providers can cite the CredibilityAttribution as documented
+proof of due diligence, providing a formal defence against liability for
+published errors (EU Data Act; sector-specific accreditation schemes)."""@en ;
+                                rdfs:isDefinedBy <https://prov-cred.org/ns/> ;
+                                rdfs:label "Credibility Attribution"@en .
+
+
+###  https://prov-cred.org/ns/DeterministicEnrichment
+provcred:DeterministicEnrichment rdf:type owl:Class ;
+                                 rdfs:subClassOf provcred:KGEnrichment ;
+                                 rdfs:comment """A KG enrichment activity driven by explicit rules or
+schema mappings (e.g. XSLT transforms, SPARQL CONSTRUCT rules). Output is
+bit-for-bit reproducible given the same input: the same rule applied to the
+same data always produces the same triple. Challenge path: rebut the rule
+definition or its application to the specific input. The associated agent is
+a plain prov:SoftwareAgent (rule engine, transform script); no
+provcred:Model or ReliabilityAttribution is required."""@en ;
+                                 rdfs:isDefinedBy <https://prov-cred.org/ns/> ;
+                                 rdfs:label "Deterministic Enrichment"@en .
+
+
+###  https://prov-cred.org/ns/GroundingEvidence
+provcred:GroundingEvidence rdf:type owl:Class ;
+                           rdfs:subClassOf prov:Entity ;
+                           rdfs:comment """Evidence (text passage, source URI, or benchmark report)
+supporting a reliability attribution or an extracted triple. Subclass of
+prov:Entity."""@en ;
+                           rdfs:isDefinedBy <https://prov-cred.org/ns/> ;
+                           rdfs:label "Grounding Evidence"@en .
+
+
+###  https://prov-cred.org/ns/HeuristicEnrichment
+provcred:HeuristicEnrichment rdf:type owl:Class ;
+                             rdfs:subClassOf provcred:KGEnrichment ;
+                             rdfs:comment """A KG enrichment activity driven by rules with tunable
+thresholds (e.g. string-similarity matching with a confidence cutoff,
+regex-based extraction with a score filter). Output is reproducible given
+the same rules and thresholds: the same script at the same threshold applied
+to the same input always produces the same triple. Challenge path: contest
+the threshold value or the rule design choice — not the calibration of a
+trained model. The threshold is recorded in rdfs:comment on the activity
+instance. The associated agent is a plain prov:SoftwareAgent; no
+provcred:Model or ReliabilityAttribution is required."""@en ;
+                             rdfs:isDefinedBy <https://prov-cred.org/ns/> ;
+                             rdfs:label "Heuristic Enrichment"@en .
+
+
+
+###  https://prov-cred.org/ns/HumanEnrichment
+provcred:HumanEnrichment rdf:type owl:Class ;
+                         rdfs:subClassOf provcred:KGEnrichment ;
+                         rdfs:comment """A KG enrichment activity performed or verified by a human
+contributor. Covers manually curated triples, community-edited assertions
+(e.g. Wikidata-style edits), and human review of model-produced triples.
+
+When human review follows model production, the resulting triple is
+attributed to HumanEnrichment (not ModelEnrichment); the preceding
+ModelEnrichment activity is linked via prov:wasInformedBy.
+
+Attribution uses prov:qualifiedAttribution with a plain prov:Attribution
+node (prov:agent pointing to the contributing person or institution).
+The activity type alone makes human provenance queryable; no
+provcred-specific attribution subclass is required.
+
+Challenge path: contest the cited source, the editorial judgment, or the
+community review process."""@en ;
+                         rdfs:isDefinedBy <https://prov-cred.org/ns/> ;
+                         rdfs:label "Human Enrichment"@en .
+
+
+###  https://prov-cred.org/ns/InferenceSetting
+provcred:InferenceSetting rdf:type owl:Class ;
+                          rdfs:subClassOf prov:Plan ;
+                          rdfs:comment """The runtime parameters under which a model run produced
+its output triples. Subclass of prov:Plan — a set of instructions guiding
+an activity (PROV-O §5.4). Attached to a provcred:ModelEnrichment activity
+via provcred:inferenceSetting; shared across all triples produced in that
+run.
+
+Parameters common to all model types: seed (for reproducibility),
+scoreThreshold (minimum model score to accept a candidate triple, relevant
+for KGE and classifiers). Parameters specific to generative models:
+temperature, topP, topK, maxTokens.
+
+prov:Plan was preferred over mls:HyperParameterSetting because
+mls:HyperParameterSetting carries training-time semantics (D15 in decision
+log); inference-time settings are conceptually distinct."""@en ;
+                          rdfs:isDefinedBy <https://prov-cred.org/ns/> ;
+                          rdfs:label "Inference Setting"@en .
+
+
+###  https://prov-cred.org/ns/KGEnrichment
+provcred:KGEnrichment rdf:type owl:Class ;
+                      rdfs:subClassOf prov:Activity ;
+                      rdfs:comment """A knowledge graph enrichment activity that adds, links, or
+validates triples. Subclass of prov:Activity. Superclass of the four method
+subclasses DeterministicEnrichment, HeuristicEnrichment, HumanEnrichment, and
+ModelEnrichment. Use this type for queries across all enrichment methods;
+use a subclass to filter by method. The enrichment method is encoded in the
+activity type — no separate derivation-method property is needed."""@en ;
+                      rdfs:isDefinedBy <https://prov-cred.org/ns/> ;
+                      rdfs:label "KG Enrichment"@en .
+
+
+###  https://prov-cred.org/ns/Model
+provcred:Model rdf:type owl:Class ;
+               rdfs:subClassOf prov:SoftwareAgent ;
+               rdfs:comment """A producing system credentialed on a task-specific
+benchmark. Subclass of prov:SoftwareAgent. A model carries a reliability
+profile by task type, not a single global score: the same model may have
+high F1 on named entity recognition but poor performance on relation
+extraction, and the two tasks carry separate reliability claims.
+
+Credentialing is valid only under domain match: the benchmark domain must
+approximate the deployment domain. A NER model evaluated on English newswire
+(CoNLL-2003) may not carry a valid reliability claim when applied to German
+cultural heritage records. The benchmarkDomain and deploymentDomain
+properties record both sides for downstream mismatch detection.
+
+A model optionally carries an institutional accreditation seal via
+provcred:accreditedBy pointing to a provcred:CredibilityAttribution."""@en ;
+               rdfs:isDefinedBy <https://prov-cred.org/ns/> ;
+               rdfs:label "Model"@en .
+
+
+###  https://prov-cred.org/ns/ModelEnrichment
+provcred:ModelEnrichment rdf:type owl:Class ;
+                         rdfs:subClassOf provcred:KGEnrichment ;
+                         rdfs:comment """A KG enrichment activity driven by a trained model whose
+behaviour is determined by learned weights and training data. Covers:
+knowledge graph embedding (KGE) completion (e.g. TransE, RotatE), named
+entity recognition, relation extraction, classical probabilistic classifiers
+(Naive Bayes, logistic regression, CRF), and generative LLM-based
+extraction.
+
+The defining characteristic is that the error traces back to learned weights
+and training data, not to a hand-designed rule or threshold. This is what
+distinguishes ModelEnrichment from HeuristicEnrichment, and why the class is
+not named ProbabilisticEnrichment (KGE models produce distance scores, not
+probabilities) or LMEnrichment (too narrow; excludes KGE and NER).
+
+Reproducibility: KGE output is fixed given model weights and seed;
+generative model output is additionally sensitive to prompt phrasing and
+sampling parameters. Challenge path: contest the model's calibration on the
+relevant instance class.
+
+The associated agent must be a provcred:Model carrying task type, training
+dataset, evaluation dataset, and benchmark domain. Reliability is attached
+to each produced triple via prov:qualifiedAttribution pointing to a
+provcred:ReliabilityAttribution. Run-level inference parameters are recorded
+via provcred:inferenceSetting on this activity."""@en ;
+                         rdfs:isDefinedBy <https://prov-cred.org/ns/> ;
+                         rdfs:label "Model Enrichment"@en .
+
+
+###  https://prov-cred.org/ns/Prompt
+provcred:Prompt rdf:type owl:Class ;
+                rdfs:subClassOf provcred:InferenceSetting ;
+                rdfs:comment """A natural-language prompt passed to a generative model at
+inference time. Subclass of provcred:InferenceSetting; prompt text is a
+first-class inference setting for LLM-based KG enrichment and carries its
+own provenance obligations under the EU AI Act (transparency on automated
+reasoning inputs)."""@en ;
+                rdfs:isDefinedBy <https://prov-cred.org/ns/> ;
+                rdfs:label "Prompt"@en .
+
+
+###  https://prov-cred.org/ns/ReliabilityAttribution
+provcred:ReliabilityAttribution rdf:type owl:Class ;
+                                rdfs:subClassOf prov:Attribution ;
+                                rdfs:comment """A qualified attribution record that attaches the producing
+model's technical performance claim to a KG triple. Subclass of
+prov:Attribution.
+
+Covers both benchmark-derived scores (provcred:basis
+provcred:BenchmarkDerived: the model's published evaluation result on a
+held-out test set) and inference-derived scores (provcred:basis
+provcred:InferenceDerived: the model's own runtime confidence for this
+specific triple). One score per triple via mls:hasValue; provcred:basis
+disambiguates the interpretation.
+
+Published alongside the triple by the KG data provider. Downstream consumers
+reuse the data at their own informed risk; the ReliabilityAttribution is the
+provider's disclosure of known model limitations, satisfying EU AI Act
+transparency requirements for AI-generated content.
+
+Uses ML Schema properties directly:
+  prov:agent      -> the provcred:Model that produced the triple
+  mls:specifiedBy -> the mls:EvaluationMeasure (e.g. MRR, F1, Hits@10)
+  mls:hasValue    -> the score as xsd:decimal
+  provcred:basis  -> BenchmarkDerived or InferenceDerived"""@en ;
+                                rdfs:isDefinedBy <https://prov-cred.org/ns/> ;
+                                rdfs:label "Reliability Attribution"@en .
+
+
+#################################################################
+#    Individuals
+#################################################################
+
+###  https://prov-cred.org/ns/BenchmarkDerived
+provcred:BenchmarkDerived rdf:type owl:NamedIndividual ;
+                          rdfs:comment """Score is the published benchmark result for this model and
+task type. The mls:hasValue on the ReliabilityAttribution is the
+population-level aggregate score from a held-out test set evaluation, used
+as a proxy for this triple."""@en ;
+                          rdfs:isDefinedBy <https://prov-cred.org/ns/> ;
+                          rdfs:label "Benchmark Derived"@en .
+
+
+###  https://prov-cred.org/ns/DatasetScheme
+provcred:DatasetScheme rdf:type owl:NamedIndividual ,
+                                skos:ConceptScheme ;
+                       rdfs:comment "Controlled vocabulary for training and evaluation datasets used in KG enrichment pipelines. Each concept carries skos:exactMatch links to external registries. provcred:trainingDataset and provcred:evaluationDataset both range over concepts in this scheme."@en ;
+                       rdfs:label "KG Enrichment Dataset Scheme"@en ;
+                       skos:hasTopConcept provcred:conll-2003 ,
+                                          provcred:fb15k-237 ,
+                                          provcred:germeval-2014 ,
+                                          provcred:nell-995 ,
+                                          provcred:semeval-2010-task8 ,
+                                          provcred:tacred ,
+                                          provcred:wn18rr .
+
+
+###  https://prov-cred.org/ns/EntityResolution
+provcred:EntityResolution rdf:type owl:NamedIndividual ,
+                                   skos:Concept ;
+                          skos:altLabel "entity disambiguation"@en ,
+                                        "entity linking"@en ,
+                                        "record linkage"@en ;
+                          skos:definition "Merging or linking references to the same real-world entity across different records or knowledge bases (e.g. linking a name mention to a GND URI)."@en ;
+                          skos:example "Linking extracted person mentions to GND authority records via lobid-gnd API."@en ;
+                          skos:inScheme provcred:TaskTypeScheme ;
+                          skos:prefLabel "Entity Resolution"@en ;
+                          skos:related provcred:NamedEntityRecognition ;
+                          skos:scopeNote "Typical benchmark: task-specific held-out evaluation; lobid-gnd link precision."@en ;
+                          skos:topConceptOf provcred:TaskTypeScheme .
+
+
+###  https://prov-cred.org/ns/HitsAt1
+provcred:HitsAt1 rdf:type owl:NamedIndividual ,
+                          mls:EvaluationMeasure ;
+                 rdfs:comment "Proportion of test triples for which the correct entity is the top-ranked prediction."@en ;
+                 rdfs:label "Hits@1"@en .
+
+
+###  https://prov-cred.org/ns/HitsAt10
+provcred:HitsAt10 rdf:type owl:NamedIndividual ,
+                           mls:EvaluationMeasure ;
+                  rdfs:comment "Proportion of test triples for which the correct entity appears in the top-10 predictions."@en ;
+                  rdfs:label "Hits@10"@en .
+
+
+###  https://prov-cred.org/ns/InferenceDerived
+provcred:InferenceDerived rdf:type owl:NamedIndividual ;
+                          rdfs:comment """Score is the model's own runtime confidence for this
+specific triple. The mls:hasValue on the ReliabilityAttribution is the
+per-triple output produced at inference time."""@en ;
+                          rdfs:isDefinedBy <https://prov-cred.org/ns/> ;
+                          rdfs:label "Inference Derived"@en .
+
+
+###  https://prov-cred.org/ns/KGECompletion
+provcred:KGECompletion rdf:type owl:NamedIndividual ,
+                                skos:Concept ;
+                       skos:altLabel "knowledge graph embedding completion"@en ,
+                                     "link prediction"@en ;
+                       skos:definition "Predicting missing edges in a knowledge graph using a knowledge graph embedding model (e.g. TransE, RotatE, ComplEx)."@en ;
+                       skos:example "TransE model predicting missing relations in a general-domain KG."@en ;
+                       skos:inScheme provcred:TaskTypeScheme ;
+                       skos:prefLabel "KGE Completion"@en ;
+                       skos:related provcred:TripleValidation ;
+                       skos:scopeNote "Typical benchmarks: FB15k-237 (MRR, Hits@10); WN18RR."@en ;
+                       skos:topConceptOf provcred:TaskTypeScheme .
+
+
+###  https://prov-cred.org/ns/LLMExtraction
+provcred:LLMExtraction rdf:type owl:NamedIndividual ,
+                                skos:Concept ;
+                       skos:altLabel "LLM-based triple extraction"@en ,
+                                     "generative extraction"@en ;
+                       skos:definition "Triple or relation extraction performed by a generative large language model, typically via structured prompting or function calling."@en ;
+                       skos:example "Claude extracting creator-work relations from catalogue descriptions."@en ;
+                       skos:inScheme provcred:TaskTypeScheme ;
+                       skos:prefLabel "LLM Extraction"@en ;
+                       skos:related provcred:RelationExtraction ;
+                       skos:scopeNote "No standard cross-model benchmark exists; use task-specific held-out evaluation. Inference parameters must be recorded via provcred:inferenceSetting on the ModelEnrichment activity."@en ;
+                       skos:topConceptOf provcred:TaskTypeScheme .
+
+
+###  https://prov-cred.org/ns/MRR
+provcred:MRR rdf:type owl:NamedIndividual ,
+                      mls:EvaluationMeasure ;
+             rdfs:comment "Standard ranking metric for KGE completion: mean of reciprocal ranks of correct entities across test triples."@en ;
+             rdfs:label "Mean Reciprocal Rank"@en .
+
+
+###  https://prov-cred.org/ns/MacroF1
+provcred:MacroF1 rdf:type owl:NamedIndividual ,
+                          mls:EvaluationMeasure ;
+                 rdfs:comment "Harmonic mean of macro-averaged precision and recall: unweighted mean over classes."@en ;
+                 rdfs:label "Macro-F1"@en .
+
+
+###  https://prov-cred.org/ns/MicroF1
+provcred:MicroF1 rdf:type owl:NamedIndividual ,
+                          mls:EvaluationMeasure ;
+                 rdfs:comment "Harmonic mean of micro-averaged precision and recall across all classes."@en ;
+                 rdfs:label "Micro-F1"@en .
+
+
+###  https://prov-cred.org/ns/NamedEntityRecognition
+provcred:NamedEntityRecognition rdf:type owl:NamedIndividual ,
+                                         skos:Concept ;
+                                skos:altLabel "NER"@en ,
+                                              "named entity linking"@en ;
+                                skos:definition "Detection and classification of named entities (persons, places, organisations, works) in unstructured text."@en ;
+                                skos:example "GLiNER applied to DDB title strings to detect person and place mentions."@en ;
+                                skos:inScheme provcred:TaskTypeScheme ;
+                                skos:prefLabel "Named Entity Recognition"@en ;
+                                skos:related provcred:EntityResolution ,
+                                             provcred:RelationExtraction ;
+                                skos:scopeNote "Typical benchmarks: CoNLL-2003 (micro-F1); GermEval 2014 for German text."@en ;
+                                skos:topConceptOf provcred:TaskTypeScheme .
+
+
+###  https://prov-cred.org/ns/Precision
+provcred:Precision rdf:type owl:NamedIndividual ,
+                            mls:EvaluationMeasure ;
+                   rdfs:comment "Fraction of predicted positives that are true positives."@en ;
+                   rdfs:label "Precision"@en .
+
+
+###  https://prov-cred.org/ns/RelationExtraction
+provcred:RelationExtraction rdf:type owl:NamedIndividual ,
+                                     skos:Concept ;
+                            skos:altLabel "RE"@en ,
+                                          "relation classification"@en ;
+                            skos:definition "Identifying typed semantic relations between entities in unstructured text and expressing them as subject-predicate-object triples."@en ;
+                            skos:example "Extracting birthPlace relations from biographical text."@en ;
+                            skos:inScheme provcred:TaskTypeScheme ;
+                            skos:prefLabel "Relation Extraction"@en ;
+                            skos:related provcred:LLMExtraction ,
+                                         provcred:NamedEntityRecognition ;
+                            skos:scopeNote "Typical benchmarks: SemEval-2010 Task 8 (macro-F1); TACRED."@en ;
+                            skos:topConceptOf provcred:TaskTypeScheme .
+
+
+###  https://prov-cred.org/ns/TaskTypeScheme
+provcred:TaskTypeScheme rdf:type owl:NamedIndividual ,
+                                 skos:ConceptScheme ;
+                        rdfs:comment "Controlled vocabulary for the enrichment task a model was credentialed for."@en ;
+                        rdfs:label "KG Enrichment Task Type Scheme"@en ;
+                        skos:hasTopConcept provcred:EntityResolution ,
+                                           provcred:KGECompletion ,
+                                           provcred:LLMExtraction ,
+                                           provcred:NamedEntityRecognition ,
+                                           provcred:RelationExtraction ,
+                                           provcred:TripleValidation .
+
+
+###  https://prov-cred.org/ns/TripleValidation
+provcred:TripleValidation rdf:type owl:NamedIndividual ,
+                                   skos:Concept ;
+                          skos:altLabel "fact checking"@en ,
+                                        "fact verification"@en ;
+                          skos:definition "Classifying an existing KG triple as correct or incorrect, typically using a trained binary classifier or scoring model."@en ;
+                          skos:example "Scoring existing sameAs assertions against a validation model."@en ;
+                          skos:inScheme provcred:TaskTypeScheme ;
+                          skos:prefLabel "Triple Validation"@en ;
+                          skos:related provcred:KGECompletion ;
+                          skos:scopeNote "Typical benchmarks: FB15k-237 with corrupted triples; NELL-995."@en ;
+                          skos:topConceptOf provcred:TaskTypeScheme .
+
+
+###  https://prov-cred.org/ns/conll-2003
+provcred:conll-2003 rdf:type owl:NamedIndividual ,
+                             skos:Concept ;
+                    skos:definition "Shared task dataset for NER in English and German newswire text. Four entity types: PER, ORG, LOC, MISC."@en ;
+                    skos:exactMatch <https://paperswithcode.com/dataset/conll-2003> ;
+                    skos:inScheme provcred:DatasetScheme ;
+                    skos:prefLabel "CoNLL-2003"@en ;
+                    skos:related provcred:germeval-2014 ;
+                    skos:scopeNote "Used for NER (provcred:NamedEntityRecognition). Standard metric: micro-F1. English domain: Reuters newswire."@en ;
+                    skos:topConceptOf provcred:DatasetScheme .
+
+
+###  https://prov-cred.org/ns/fb15k-237
+provcred:fb15k-237 rdf:type owl:NamedIndividual ,
+                            skos:Concept ;
+                   skos:altLabel "Freebase 15k-237"@en ;
+                   skos:definition "A standard KGE completion benchmark derived from Freebase with 237 relation types. Inverse relations removed to prevent test leakage."@en ;
+                   skos:exactMatch <https://paperswithcode.com/dataset/fb15k-237> ;
+                   skos:inScheme provcred:DatasetScheme ;
+                   skos:prefLabel "FB15k-237"@en ;
+                   skos:related provcred:wn18rr ;
+                   skos:scopeNote "Used for KGE completion (provcred:KGECompletion). Train: 272,115 triples; test: 20,466 triples; 14,541 entities."@en ;
+                   skos:topConceptOf provcred:DatasetScheme .
+
+
+###  https://prov-cred.org/ns/germeval-2014
+provcred:germeval-2014 rdf:type owl:NamedIndividual ,
+                                skos:Concept ;
+                       skos:altLabel "GermEval NER 2014"@en ;
+                       skos:definition "Shared task dataset for NER in German, covering nested entities in Wikipedia and news text."@en ;
+                       skos:exactMatch <https://paperswithcode.com/dataset/germeval-2014> ;
+                       skos:inScheme provcred:DatasetScheme ;
+                       skos:prefLabel "GermEval 2014"@en ;
+                       skos:related provcred:conll-2003 ;
+                       skos:scopeNote "Used for NER (provcred:NamedEntityRecognition) in German-language pipelines. More appropriate than CoNLL-2003 when deployment domain is German cultural heritage."@en ;
+                       skos:topConceptOf provcred:DatasetScheme .
+
+
+###  https://prov-cred.org/ns/nell-995
+provcred:nell-995 rdf:type owl:NamedIndividual ,
+                           skos:Concept ;
+                  skos:altLabel "Never-Ending Language Learner 995"@en ;
+                  skos:definition "A KG dataset derived from the NELL system, used for multi-hop reasoning and triple validation benchmarks."@en ;
+                  skos:exactMatch <https://paperswithcode.com/dataset/nell-995> ;
+                  skos:inScheme provcred:DatasetScheme ;
+                  skos:prefLabel "NELL-995"@en ;
+                  skos:related provcred:fb15k-237 ;
+                  skos:scopeNote "Used for triple validation (provcred:TripleValidation). Standard metrics: Hits@10, MRR."@en ;
+                  skos:topConceptOf provcred:DatasetScheme .
+
+
+###  https://prov-cred.org/ns/semeval-2010-task8
+provcred:semeval-2010-task8 rdf:type owl:NamedIndividual ,
+                                     skos:Concept ;
+                            skos:definition "Shared task dataset for multi-way classification of semantic relations between pairs of nominals in English. Nine directed relation types plus Other."@en ;
+                            skos:exactMatch <https://paperswithcode.com/dataset/semeval-2010-task-8> ;
+                            skos:inScheme provcred:DatasetScheme ;
+                            skos:prefLabel "SemEval-2010 Task 8"@en ;
+                            skos:related provcred:tacred ;
+                            skos:scopeNote "Used for relation extraction (provcred:RelationExtraction). Standard metric: macro-F1 (excluding Other)."@en ;
+                            skos:topConceptOf provcred:DatasetScheme .
+
+
+###  https://prov-cred.org/ns/tacred
+provcred:tacred rdf:type owl:NamedIndividual ,
+                         skos:Concept ;
+                skos:altLabel "TAC Relation Extraction Dataset"@en ;
+                skos:definition "Large-scale relation extraction dataset with 41 relation types and a high proportion of no-relation instances, derived from the TAC KBP challenges."@en ;
+                skos:exactMatch <https://paperswithcode.com/dataset/tacred> ;
+                skos:inScheme provcred:DatasetScheme ;
+                skos:prefLabel "TACRED"@en ;
+                skos:related provcred:semeval-2010-task8 ;
+                skos:scopeNote "Used for relation extraction (provcred:RelationExtraction). Standard metric: micro-F1."@en ;
+                skos:topConceptOf provcred:DatasetScheme .
+
+
+###  https://prov-cred.org/ns/wn18rr
+provcred:wn18rr rdf:type owl:NamedIndividual ,
+                         skos:Concept ;
+                skos:altLabel "WordNet 18RR"@en ;
+                skos:definition "A KGE completion benchmark derived from WordNet with inverse relations removed to prevent test leakage."@en ;
+                skos:exactMatch <https://paperswithcode.com/dataset/wn18rr> ;
+                skos:inScheme provcred:DatasetScheme ;
+                skos:prefLabel "WN18RR"@en ;
+                skos:related provcred:fb15k-237 ;
+                skos:scopeNote "Used for KGE completion (provcred:KGECompletion). Train: 86,835 triples; test: 3,134 triples; 40,943 entities."@en ;
+                skos:topConceptOf provcred:DatasetScheme .
+
+
+###  Generated by the OWL API (version 4.5.29.2024-05-13T12:11:03Z) https://github.com/owlcs/owlapi
